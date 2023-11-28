@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>도서 목록</title>
+</head>
+<body>
+  <h1>도서 목록</h1>
+  
+  <!-- 도서 추가 폼 -->
+  <form id="addBookForm">
+    <label for="title">제목:</label>
+    <input type="text" id="title" required>
+
+    <label for="author">저자:</label>
+    <input type="text" id="author" required>
+
+    <button type="submit">도서 추가</button>
+  </form>
+
+  <!-- 도서 목록 -->
+  <ul id="bookList"></ul>
+
+  <script>
+    // 도서 목록을 가져와서 표시하는 함수
+    async function fetchBooks() {
+      const response = await fetch('/books');
+      const books = await response.json();
+
+      const bookListElement = document.getElementById('bookList');
+      bookListElement.innerHTML = ''; // 기존 목록 비우기
+
+      books.forEach(book => {
+        const li = document.createElement('li');
+        li.textContent = `${book.title} by ${book.author} `;
+        
+        // 도서 삭제 버튼
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '삭제';
+        deleteButton.addEventListener('click', () => deleteBook(book.id));
+
+        li.appendChild(deleteButton);
+        bookListElement.appendChild(li);
+      });
+    }
+
+    // 도서 추가 폼 제출 시
+    document.getElementById('addBookForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const author = document.getElementById('author').value;
+
+      // API를 통해 도서 추가
+      fetch('/books', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, author }),
+      })
+      .then(response => response.json())
+      .then(() => {
+        // 도서 추가 후 목록 다시 불러오기
+        fetchBooks();
+        // 폼 초기화
+        document.getElementById('title').value = '';
+        document.getElementById('author').value = '';
+      });
+    });
+
+    // 도서 삭제 함수
+    function deleteBook(bookId) {
+      // API를 통해 도서 삭제
+      fetch(`/books/${bookId}`, {
+        method: 'DELETE',
+      })
+      .then(() => {
+        // 도서 삭제 후 목록 다시 불러오기
+        fetchBooks();
+      });
+    }
+
+    // 페이지 로드 시 도서 목록을 가져오기
+    window.onload = fetchBooks;
+  </script>
+</body>
+</html>
